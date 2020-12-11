@@ -1,0 +1,24 @@
+---
+- name: Create temporary file
+  tempfile:
+    state: file
+    suffix: yml
+  register: tempfile_app_network
+
+- name: Generate Heat stack from template
+  template:
+    src: heat-network.yml.j2
+    dest: "{{ tempfile_app_network.path }}"
+
+- name: Create Networks from Heat stack
+  os_stack:
+    name: app_network
+    state: present
+    template: "{{ tempfile_app_network.path }}"
+
+- name: Delete temporary Heat stack template
+  file:
+    name: "{{ tempfile_app_network.path }}"
+    state: absent
+
+...

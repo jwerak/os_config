@@ -1,0 +1,52 @@
+---
+# {{ ansible_managed }}
+heat_template_version: rocky
+
+resources:
+
+  app_router:
+    type: OS::Neutron::Router
+    properties:
+      name: "app router"
+      external_gateway_info: {"network": "net-external"}
+
+{% for network in os_config_networks %}
+
+  {{ network.name }}_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "{{ network.name }}"
+      dns_domain: "{{ network.dns_domain }}"
+
+{% for subnet in network.subnets %}
+
+  {{ subnet.name }}_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "{{ subnet.name }}"
+      network: {get_resource: {{ network.name }}_network}
+      cidr: "{{ subnet.cidr }}"
+      dns_nameservers: {{ subnet.dns_nameservers | to_json }}
+
+
+  {{ subnet.name }}_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: {get_resource: app_router}
+      subnet: {get_resource: {{ subnet.name }}_subnet}
+
+{% endfor %} {# network.subnets #}
+{% endfor %} {# os_config_networks #}
+
+
+{% for security_group in os_config_security_groups %}
+
+  {{ security_group.name }}_sec_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: {{ security_group.name }}
+      rules: {{ security_group.rules | to_json }}
+
+{% endfor %} {# os_config_security_groups #}
+
+...

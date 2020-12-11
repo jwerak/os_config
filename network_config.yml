@@ -1,0 +1,9 @@
+---
+- name: Configure OpenStack networking
+  hosts: localhost
+  vars_files:
+    - vars/app_network.yml
+  roles:
+    - name: os_config
+
+...
