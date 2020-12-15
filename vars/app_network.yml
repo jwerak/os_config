@@ -9,12 +9,42 @@ os_config_networks:
           - 8.8.8.8
           - 8.8.4.4
 
+      - name: frontendb
+        cidr: 192.168.11.0/24
+        dns_nameservers:
+          - 8.8.8.8
+          - 8.8.4.4
+
+  - name: backend
+    dns_domain: backend.rhpoc.net.
+    subnets:
+      - name: backenda
+        cidr: 192.168.20.0/24
+        dns_nameservers:
+          - 8.8.8.8
+          - 8.8.4.4
+
+  - name: db
+    dns_domain: db.rhpoc.net.
+    subnets:
+      - name: dba
+        cidr: 192.168.30.0/24
+        dns_nameservers:
+          - 8.8.8.8
+          - 8.8.4.4
+
 os_config_routers:
   - name: app_router
     interfaces:
       - net: frontend_network
         subnet: frontenda
         portip: 192.168.10.1
+      - net: backend_network
+        subnet: backenda
+        portip: 192.168.20.1
+      - net: db_network
+        subnet: dba
+        portip: 192.168.30.1
 
 os_config_security_groups:
   - name: allow-frontend-access
@@ -25,5 +55,47 @@ os_config_security_groups:
         port_range_max: 443
         remote_ip_prefix: 0.0.0.0/0
         direction: ingress
+
+      - protocol: tcp
+        port_range_min: 8080
+        port_range_max: 8080
+        remote_ip_prefix: 192.168.20.0/24
+        direction: egress
+
+  - name: allow-backend-access
+    description: security group for backend servers
+    rules:
+      - protocol: tcp
+        port_range_min: 8080
+        port_range_max: 8080
+        remote_ip_prefix: 192.168.10.0/24
+        direction: ingress
+
+      - protocol: tcp
+        port_range_min: 5432
+        port_range_max: 5432
+        remote_ip_prefix: 192.168.30.0/24
+        direction: egress
+
+      - protocol: icmp
+        port_range_min: 0
+        port_range_max: 255
+        ethertype: IPv4
+        remote_ip_prefix: 0.0.0.0/0
+
+  - name: allow-db-access
+    description: security group for databases
+    rules:
+      - protocol: tcp
+        port_range_min: 5432
+        port_range_max: 5432
+        remote_ip_prefix: 192.168.20.0/24
+        direction: ingress
+
+      - protocol: icmp
+        port_range_min: 0
+        port_range_max: 255
+        ethertype: IPv4
+        remote_ip_prefix: 0.0.0.0/0
 
 ...
